@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>T3</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: "Trebuchet MS";
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+		</style>
+	</head>
+	<body>
+		<script src="lib/three.js"></script>
+    <script src="lib/TransformControls.js"></script>
+		<script src="lib/OrbitControls.js"></script>
+    <script src="lib/stats.js"></script>
+    <script src="lib/dat.gui.js"></script>
+		<script>
+
+			var container;
+			var camera, scene, renderer;
+			var plane;
+			var mouse, raycaster;
+
+			var isAdd=true,isSub=false,isMove=false,isZoom=false,isAlign=false,isInput=false;
+			var isProfile=true,isWood=false,isGlass=false,isCloth=false;
+			var helperMesh, helperMaterial;
+			var allGeometry, profileMaterial,woodMaterial,glassMaterial,clothMaterial;
+			var objects = [],profiles = [],woods = [],glasses = [],cloths = [];
+			var numAlign=0;
+
+			var transformAxis;
+			var guiMode,guiModeControl,guiMaterial,guiMaterialControl,guiMove,guiMoveControl,guiZoom,guiZoomControl;
+			var mX,mY,mZ,sX,sY,sZ;
+			var objNum;
+
+
+      init();
+			render();
+
+			function init() {
+
+        //container
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+        //info
+				var info = document.createElement( 'div' );
+				info.style.position = 'absolute';
+				info.style.top = '10px';
+				info.style.width = '100%';
+				info.style.textAlign = 'center';
+        //info.innerHTML = 'zuo';
+				container.appendChild( info );
+
+        //scene
+        scene = new THREE.Scene();
+
+        //camera
+				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.set( 800, 1200, 1500 );
+				camera.lookAt( new THREE.Vector3() );
+
+        //render
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setClearColor( 0xf0f0f0 );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+        //light
+        var ambientLight=new THREE.AmbientLight(0x0c0c0c);
+        scene.add(ambientLight);
+        var ambientLight = new THREE.AmbientLight( 0x606060 );
+				scene.add( ambientLight );
+				var directionalLight = new THREE.DirectionalLight( 0xffffff );
+				directionalLight.position.set( 1, 0.75, 0.5 ).normalize();
+				scene.add( directionalLight );
+
+        // helper
+				helperGeo = new THREE.BoxGeometry( 30, 30, 30 );
+				helperMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
+				helperMesh = new THREE.Mesh( helperGeo, helperMaterial );
+				scene.add( helperMesh );
+
+				// mesh
+				allGeometry = new THREE.BoxGeometry( 30, 30, 30 );
+				profileMaterial = new THREE.MeshLambertMaterial( { color: 0xcccccc, opacity: 0.9, transparent: true } );
+				woodMaterial = new THREE.MeshLambertMaterial( { color: 0xdeb887, opacity: 0.9, transparent: true } );
+				glassMaterial = new THREE.MeshLambertMaterial( { color: 0xbfefff, opacity: 0.7, transparent: true } );
+				clothMaterial = new THREE.MeshLambertMaterial( { color: 0xb4eeb4, opacity: 0.9, transparent: true } );
+
+				//plane
+        var geometry = new THREE.PlaneBufferGeometry( 2000, 2000 );
+				geometry.rotateX( - Math.PI / 2 );
+				plane = new THREE.Mesh( geometry, new THREE.MeshBasicMaterial( { visible: false } ) );
+				scene.add( plane );
+				objects.push( plane );
+
+				// grid
+				var size = 1000, step = 10;
+				var geometry = new THREE.Geometry();
+				for ( var i = - size; i <= size; i += step ) {
+					geometry.vertices.push( new THREE.Vector3( - size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3(   size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0, - size ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0,   size ) );
+				}
+				var material = new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.1, transparent: true } );
+				var line = new THREE.LineSegments( geometry, material );
+				scene.add( line );
+
+				//grid
+        var size = 1000, step = 100;
+				var geometry = new THREE.Geometry();
+				for ( var i = - size; i <= size; i += step ) {
+					geometry.vertices.push( new THREE.Vector3( - size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3(   size, 0, i ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0, - size ) );
+					geometry.vertices.push( new THREE.Vector3( i, 0,   size ) );
+				}
+				var material = new THREE.LineBasicMaterial( { color: 0x000000, opacity: 0.2, transparent: true } );
+				var line2 = new THREE.LineSegments( geometry, material );
+				scene.add( line2 );
+
+        //raycaster
+				raycaster = new THREE.Raycaster();
+				mouse = new THREE.Vector2();
+
+        //orbitControls
+        var orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        //event
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'keydown', onDocumentKeyDown, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+
+
+			}
+
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function onDocumentMouseMove( event ) {
+				//event.preventDefault();
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+        if ( intersects.length > 0 ) {
+          var intersect = intersects[0];
+					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
+					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+				}
+				render();
+			}
+
+			function onDocumentMouseDown( event ) {
+				//event.preventDefault();
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( objects );
+				var intersect = intersects[0];
+				var isLast=true;
+
+				if ( intersects.length > 0 && objects.length>0) {
+					//Mode
+					if (guiMode==null) {
+						guiModeControl =  {
+							Mode : 'Add [A]',
+						};
+						guiMode = new dat.GUI();
+						var gM=guiMode.add(guiModeControl, 'Mode',  [ 'Add [A]', 'Subtract [S]', 'Move [D]', 'Zoom [F]','Align [G]'] );
+						gM.listen();
+						gM.onChange(function (value) {
+							if (guiModeControl.Mode=='Add [A]') {
+								isAdd=true;isSub=false;isMove=false;isZoom=false;isAlign=false;
+							}
+							else if (guiModeControl.Mode=='Subtract [S]') {
+								isAdd=false;isSub=true;isMove=false;isZoom=false;isAlign=false;
+							}
+							else if (guiModeControl.Mode=='Move [D]') {
+								isAdd=false;isSub=false;isMove=true;isZoom=false;isAlign=false;
+							}
+							else if (guiModeControl.Mode=='Zoom [F]') {
+								isAdd=false;isSub=false;isMove=false;isZoom=true;isAlign=false;
+							}
+							else if (guiModeControl.Mode=='Align [G]') {
+								isAdd=false;isSub=false;isMove=false;isZoom=false;isAlign=true;
+							}
+						});
+						function updateMode() {
+							if (isAdd) {
+								guiModeControl.Mode = 'Add [A]';
+							}
+							else if (isSub) {
+								guiModeControl.Mode = 'Subtract [S]';
+							}
+							else if (isMove) {
+								guiModeControl.Mode = 'Move [D]';
+							}
+							else if (isZoom) {
+								guiModeControl.Mode = 'Zoom [F]';
+							}
+							else if (isAlign) {
+								guiModeControl.Mode = 'Align [G]';
+							}
+							requestAnimationFrame(updateMode);
+						}
+						updateMode();
+					}
+
+					switch (true) {
+						case isAdd:
+							if (transformAxis) {
+								transformAxis.detach();
+								transformAxis=null;
+							}
+							if (guiMove) {
+								guiMove.destroy();
+								guiMove=null;
+							}
+							if (guiZoom) {
+								guiZoom.destroy();
+								guiZoom=null;
+							}
+							if (guiMaterial) {
+								guiMaterial.destroy();
+								guiMaterial=null;
+							}
+							numAlign=0;
+							//Material gui
+							if (guiMaterial==null) {
+								guiMaterialControl =  {
+									Material : 'Add Profile [1]',
+								};
+								guiMaterial = new dat.GUI();
+								var gMat=guiMaterial.add(guiMaterialControl, 'Material',  [ 'Add Profile [1]', 'Add Wood [2]', 'Add Glass [3]', 'Add Cloth [4]' ] );
+							}
+							gMat.listen();
+							gMat.onChange(function (value) {
+								if (guiMaterialControl.Material=='Add Profile [1]') {
+									isProfile=true;isWood=false;isGlass=false;isCloth=false;
+								}
+								else if (guiMaterialControl.Material=='Add Wood [2]') {
+									isProfile=false;isWood=true;isGlass=false;isCloth=false;
+								}
+								else if (guiMaterialControl.Material=='Add Glass [3]') {
+									isProfile=false;isWood=false;isGlass=true;isCloth=false;
+								}
+								else if (guiMaterialControl.Material=='Add Cloth [4]') {
+									isProfile=false;isWood=false;isGlass=false;isCloth=true;
+								}
+							});
+							function updateMaterial() {
+								if (isProfile) {
+									guiMaterialControl.Material = 'Add Profile [1]';
+								}
+								else if (isWood) {
+									guiMaterialControl.Material = 'Add Wood [2]';
+								}
+								else if (isGlass) {
+									guiMaterialControl.Material = 'Add Glass [3]';
+								}
+								else if (isCloth) {
+									guiMaterialControl.Material = 'Add Cloth [4]';
+								}
+								requestAnimationFrame(updateMaterial);
+							}
+							updateMaterial();
+							//Add material
+							if (objects.length!=1) {
+								if (isProfile) {
+									var profile = new THREE.Mesh( allGeometry, profileMaterial );
+									profile.position.copy( intersect.point ).add( intersect.face.normal );
+									profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									scene.add( profile );
+									objects.push( profile );
+		              profiles.push( profile );
+								}
+								else if (isWood) {
+									var wood = new THREE.Mesh( allGeometry, woodMaterial );
+									wood.position.copy( intersect.point ).add( intersect.face.normal );
+									wood.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									scene.add( wood );
+									objects.push( wood );
+		              woods.push( wood );
+								}
+								else if (isGlass) {
+									var glass = new THREE.Mesh( allGeometry, glassMaterial );
+									glass.position.copy( intersect.point ).add( intersect.face.normal );
+									glass.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									scene.add( glass );
+									objects.push( glass );
+		              glasses.push( glass );
+								}
+								else if (isCloth) {
+									var cloth = new THREE.Mesh( allGeometry, clothMaterial );
+									cloth.position.copy( intersect.point ).add( intersect.face.normal );
+									cloth.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									scene.add( cloth );
+									objects.push( cloth );
+		              cloths.push( cloth );
+								}
+							}
+							break;
+
+						case isSub:
+							if (transformAxis) {
+								transformAxis.detach();
+								transformAxis=null;
+							}
+							if (guiMove) {
+								guiMove.destroy();
+								guiMove=null;
+							}
+							if (guiZoom) {
+								guiZoom.destroy();
+								guiZoom=null;
+							}
+							if (guiMaterial) {
+								guiMaterial.destroy();
+								guiMaterial=null;
+							}
+							numAlign=0;
+							if ( intersect.object != plane ) {
+								scene.remove( intersect.object );
+								objects.splice( objects.indexOf( intersect.object ), 1 );
+								if (profiles.indexOf( intersect.object )!=-1) {
+									profiles.splice( profiles.indexOf( intersect.object ), 1 );
+								}
+								if (woods.indexOf( intersect.object )!=-1) {
+									woods.splice( woods.indexOf( intersect.object ), 1 );
+								}
+								if (glasses.indexOf( intersect.object )!=-1) {
+									glasses.splice( glasses.indexOf( intersect.object ), 1 );
+								}
+								if (cloths.indexOf( intersect.object )!=-1) {
+									cloths.splice( cloths.indexOf( intersect.object ), 1 );
+								}
+								if (objects.length==1) {
+									isLast=false;
+									guiMode.destroy();
+								  guiMode=null;
+									isAdd=true;isSub=false;isMove=false;isZoom=false;isAlign=false;
+									isProfile=true;isWood=false;isGlass=false;isCloth=false;
+								}
+							}
+							break;
+
+						case isMove:
+							if (transformAxis) {
+								transformAxis.detach();
+								transformAxis=null;
+							}
+							if (guiMove) {
+								guiMove.destroy();
+								guiMove=null;
+								guiMoveControl=null;
+							}
+							if (guiZoom) {
+								guiZoom.destroy();
+								guiZoom=null;
+							}
+							if (guiMaterial) {
+								guiMaterial.destroy();
+								guiMaterial=null;
+							}
+							numAlign=0;
+							if (intersect.object != plane) {
+								if (transformAxis==null) {
+									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
+									transformAxis.addEventListener( 'change', render );
+									transformAxis.attach( intersect.object );
+									scene.add( transformAxis );
+								}
+
+								if (profiles.indexOf(intersect.object)!=-1) {
+									objNum='Profile '+profiles.indexOf(intersect.object);
+								}
+								else if (woods.indexOf(intersect.object)!=-1) {
+									objNum='Wood '+woods.indexOf(intersect.object);
+								}
+								else if (glasses.indexOf(intersect.object)!=-1) {
+									objNum='Glass '+glasses.indexOf(intersect.object);
+								}
+								else if (cloths.indexOf(intersect.object)!=-1) {
+									objNum='Cloth '+cloths.indexOf(intersect.object);
+								}
+                if (guiMove==null) {
+									guiMoveControl =  {
+										objectNumber : objNum,
+ 										midX : intersect.object.position.x,
+ 										midY : intersect.object.position.y,
+ 										midZ : intersect.object.position.z,
+									};
+                  guiMove = new dat.GUI();
+                  guiMove.add(guiMoveControl, 'objectNumber');
+                  mX = guiMove.add(guiMoveControl, 'midX', -1000, 1000).step(10);
+                  mY = guiMove.add(guiMoveControl, 'midY', 0, 2000).step(10);
+                  mZ = guiMove.add(guiMoveControl, 'midZ', -1000, 1000).step(10);
+
+                  mX.onChange(function (value) {
+                    intersect.object.position.x = guiMoveControl.midX;
+                    transformAxis.attach( intersect.object );
+                  });
+                  mY.onChange(function (value) {
+                    intersect.object.position.y = guiMoveControl.midY;
+                    transformAxis.attach( intersect.object );
+                  });
+                  mZ.onChange(function (value) {
+                    intersect.object.position.z = guiMoveControl.midZ;
+                    transformAxis.attach( intersect.object );
+                  });
+									var updateMove = function() {
+										guiMoveControl.objectNumber = objNum;
+										guiMoveControl.midX = intersect.object.position.x;
+										guiMoveControl.midY = intersect.object.position.y;
+										guiMoveControl.midZ = intersect.object.position.z;
+										requestAnimationFrame(updateMove);
+									};
+                  updateMove();
+									mX.listen();
+									mY.listen();
+									mZ.listen();
+                }
+							}
+							break;
+
+						case isZoom:
+							if (transformAxis) {
+								transformAxis.detach();
+								transformAxis=null;
+							}
+							if (guiMove) {
+								guiMove.destroy();
+								guiMove=null;
+							}
+							if (guiZoom) {
+								guiZoom.destroy();
+								guiZoom=null;
+							}
+							if (guiMaterial) {
+								guiMaterial.destroy();
+								guiMaterial=null;
+							}
+							numAlign=0;
+							if (intersect.object != plane) {
+								if (transformAxis==null) {
+									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
+									transformAxis.addEventListener( 'change', render );
+									transformAxis.attach( intersect.object );
+									transformAxis.setMode('scale');
+									scene.add( transformAxis );
+								}
+								var objNum;
+								if (profiles.indexOf(intersect.object)!=-1) {
+									objNum='Profile '+profiles.indexOf(intersect.object);
+								}
+								else if (woods.indexOf(intersect.object)!=-1) {
+									objNum='Wood '+woods.indexOf(intersect.object);
+								}
+								else if (glasses.indexOf(intersect.object)!=-1) {
+									objNum='Glass '+glasses.indexOf(intersect.object);
+								}
+								else if (cloths.indexOf(intersect.object)!=-1) {
+									objNum='Cloth '+cloths.indexOf(intersect.object);
+								}
+                if (guiZoom==null) {
+                  guiZoomControl =  {
+                    objectNumber : objNum,
+                    sizeX : intersect.object.scale.x*30,
+                    sizeY : intersect.object.scale.y*30,
+                    sizeZ : intersect.object.scale.z*30,
+                  };
+                  guiZoom = new dat.GUI();
+                  guiZoom.add(guiZoomControl, 'objectNumber');
+                  sX = guiZoom.add(guiZoomControl, 'sizeX', 30, 2000).step(10);
+                  sY = guiZoom.add(guiZoomControl, 'sizeY', 30, 2000).step(10);
+                  sZ = guiZoom.add(guiZoomControl, 'sizeZ', 30, 2000).step(10);
+
+                  sX.onChange(function (value) {
+                    intersect.object.scale.x = guiZoomControl.sizeX/30;
+                    transformAxis.attach( intersect.object );
+                  });
+                  sY.onChange(function (value) {
+                    intersect.object.scale.y = guiZoomControl.sizeY/30;
+                    transformAxis.attach( intersect.object );
+                  });
+                  sZ.onChange(function (value) {
+                    intersect.object.scale.z = guiZoomControl.sizeZ/30;
+                    transformAxis.attach( intersect.object );
+                  });
+                  function updateZoom() {
+										if (profiles.indexOf(intersect.object)!=-1) {
+											if ((intersect.object.scale.x!=1&&intersect.object.scale.y!=1)||(intersect.object.scale.y!=1&&intersect.object.scale.z!=1)||(intersect.object.scale.z!=1&&intersect.object.scale.x!=1)||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1) {
+												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											}
+										}
+										else if (woods.indexOf(intersect.object)!=-1) {
+											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
+												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											}
+										}
+										else if (glasses.indexOf(intersect.object)!=-1) {
+											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
+												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											}
+										}
+										else if (cloths.indexOf(intersect.object)!=-1) {
+											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
+												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											}
+										}
+                    guiZoomControl.sizeX = intersect.object.scale.x*30;
+                    guiZoomControl.sizeY = intersect.object.scale.y*30;
+                    guiZoomControl.sizeZ = intersect.object.scale.z*30;
+                    requestAnimationFrame(updateZoom);
+                  }
+                  updateZoom();
+									sX.listen();
+									sY.listen();
+									sZ.listen();
+                }
+							}
+							break;
+
+						case isAlign:
+							if (transformAxis) {
+								transformAxis.detach();
+								transformAxis=null;
+							}
+							if (guiMove) {
+								guiMove.destroy();
+								guiMove=null;
+							}
+							if (guiZoom) {
+								guiZoom.destroy();
+								guiZoom=null;
+							}
+							if (guiMaterial) {
+								guiMaterial.destroy();
+								guiMaterial=null;
+							}
+							if (numAlign==0) {
+								alignAll();
+							}
+							numAlign=1;
+							break;
+					}
+				}
+				if (objects.length==1&&isLast) {
+					var profile = new THREE.Mesh( allGeometry, profileMaterial );
+					profile.position.copy( intersect.point ).add( intersect.face.normal );
+					profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+					scene.add( profile );
+					objects.push( profile );
+					profiles.push( profile );
+				}
+        render();
+			}
+
+			function onDocumentKeyDown( event ) {
+				switch( event.which || event.keyCode ) {
+					case 65: isAdd=true;isSub=false;isMove=false;isZoom=false;isAlign=false;break;//A
+					case 83: isAdd=false;isSub=true;isMove=false;isZoom=false;isAlign=false;break;//S
+					case 68: isAdd=false;isSub=false;isMove=true;isZoom=false;isAlign=false;break;//D
+					case 70: isAdd=false;isSub=false;isMove=false;isZoom=true;isAlign=false;break;//F
+					case 71: isAdd=false;isSub=false;isMove=false;isZoom=false;isAlign=true;alignAll();break;//G
+					case 49: if (isAdd) {isProfile=true;isWood=false;isGlass=false;isCloth=false;};break;//1
+					case 50: if (isAdd) {isProfile=false;isWood=true;isGlass=false;isCloth=false;};break;//2
+					case 51: if (isAdd) {isProfile=false;isWood=false;isGlass=true;isCloth=false;};break;//3
+					case 52: if (isAdd) {isProfile=false;isWood=false;isGlass=false;isCloth=true;};break;//4
+          case 81:
+					break;//Q test
+					case 87:isInput=true;InOutData();
+					break;//W input output
+				}
+			}
+			function InOutData(){
+				var pro = [],woo = [],gla = [],clo = [],allData={};
+				for(var i=0;i<profiles.length;i++)
+				{
+					pro[i]=[[profiles[i].position.x,profiles[i].position.y,profiles[i].position.z],[profiles[i].scale.x,profiles[i].scale.y,profiles[i].scale.z]];
+				}
+				for(var i=0;i<woods.length;i++)
+				{
+					woo[i]=[[woods[i].position.x,woods[i].position.y,woods[i].position.z],[woods[i].scale.x,woods[i].scale.y,woods[i].scale.z]];
+				}
+				for(var i=0;i<glasses.length;i++)
+				{
+					gla[i]=[[glasses[i].position.x,glasses[i].position.y,glasses[i].position.z],[glasses[i].scale.x,glasses[i].scale.y,glasses[i].scale.z]];
+				}
+				for(var i=0;i<cloths.length;i++)
+				{
+					clo[i]=[[cloths[i].position.x,cloths[i].position.y,cloths[i].position.z],[cloths[i].scale.x,cloths[i].scale.y,cloths[i].scale.z]];
+				}
+				allData={pro:pro,woo:woo,gla:gla,clo:clo};
+
+				var outData=JSON.stringify(allData);
+				//dataJSON=JSON.stringify(data);
+				//dataJS=JSON.parse(dataJSON);
+
+				if (allData) {
+					if (transformAxis) {
+						transformAxis.detach();
+						transformAxis=null;
+					}
+					if (guiMove) {
+						guiMove.destroy();
+						guiMove=null;
+					}
+					if (guiZoom) {
+						guiZoom.destroy();
+						guiZoom=null;
+					}
+					if (guiMaterial) {
+						guiMaterial.destroy();
+						guiMaterial=null;
+					}
+					for(var i=0;i<profiles.length;i++)
+					{
+						scene.remove( profiles[i] );
+						objects.splice( objects.indexOf( profiles[i] ), 1 );
+					}profiles=[];
+					for(var i=0;i<woods.length;i++)
+					{
+						scene.remove( woods[i] );
+						objects.splice( objects.indexOf( woods[i] ), 1 );
+					}woods=[];
+					for(var i=0;i<glasses.length;i++)
+					{
+						scene.remove( glasses[i] );
+						objects.splice( objects.indexOf( glasses[i] ), 1 );
+					}glasses=[];
+					for(var i=0;i<cloths.length;i++)
+					{
+						scene.remove( cloths[i] );
+						objects.splice( objects.indexOf( cloths[i] ), 1 );
+					}cloths=[];
+				}
+				var inData=JSON.parse(prompt("取消:\n移除当前模型\n\n好:\n保存模型,或输入新模型",outData));
+
+				if (inData!=null && inData!=""){
+					if (inData['pro']!=[]) {
+						profiles=[];
+						for (var i = 0; i < inData['pro'].length; i++) {
+							profiles[i] = new THREE.Mesh( allGeometry, profileMaterial );
+							profiles[i].position.x=inData['pro'][i][0][0];profiles[i].position.y=inData['pro'][i][0][1];profiles[i].position.z=inData['pro'][i][0][2];
+							profiles[i].scale.x=inData['pro'][i][1][0];profiles[i].scale.y=inData['pro'][i][1][1];profiles[i].scale.z=inData['pro'][i][1][2];
+							scene.add( profiles[i] );
+							objects.push( profiles[i] );
+						}
+					}
+					else if (inData['woo']!=[]) {
+						woods=[];
+						for (var i = 0; i < inData['woo'].length; i++) {
+							woods[i] = new THREE.Mesh( allGeometry, profileMaterial );
+							woods[i].position.x=inData['woo'][i][0][0];woods[i].position.y=inData['woo'][i][0][1];woods[i].position.z=inData['woo'][i][0][2];
+							woods[i].scale.x=inData['woo'][i][1][0];woods[i].scale.y=inData['woo'][i][1][1];woods[i].scale.z=inData['woo'][i][1][2];
+							scene.add( woods[i] );
+							objects.push( woods[i] );
+						}
+					}
+					else if (inData['gla']!=[]) {
+						glasses=[];
+						for (var i = 0; i < inData['gla'].length; i++) {
+							glasses[i] = new THREE.Mesh( allGeometry, glafileMaterial );
+							glasses[i].position.x=inData['gla'][i][0][0];glasses[i].position.y=inData['gla'][i][0][1];glasses[i].position.z=inData['gla'][i][0][2];
+							glasses[i].scale.x=inData['gla'][i][1][0];glasses[i].scale.y=inData['gla'][i][1][1];glasses[i].scale.z=inData['gla'][i][1][2];
+							scene.add( glasses[i] );
+							objects.push( glasses[i] );
+						}
+					}
+					else if (inData['clo']!=[]) {
+						cloths=[];
+						for (var i = 0; i < inData['clo'].length; i++) {
+							cloths[i] = new THREE.Mesh( allGeometry, clofileMaterial );
+							cloths[i].position.x=inData['clo'][i][0][0];cloths[i].position.y=inData['clo'][i][0][1];cloths[i].position.z=inData['clo'][i][0][2];
+							cloths[i].scale.x=inData['clo'][i][1][0];cloths[i].scale.y=inData['clo'][i][1][1];cloths[i].scale.z=inData['clo'][i][1][2];
+							scene.add( cloths[i] );
+							objects.push( cloths[i] );
+						}
+					}
+					render();
+				}
+			}
+
+			function alignAll(){
+				var proScaleX= [],proScaleY= [],proScaleZ= [];
+				var proStartX= [],proStartY= [],proStartZ= [];
+				var proEndX= [],proEndY= [],proEndZ= [];
+				var proBox=[];
+				var indexI=[0],indexJ=[],indexK=[];
+				function isEmpty(value) {
+					return Object.keys(value).length === 0;
+				}
+				//X dimensionality reduction
+				for (var i = 0; i < profiles.length; i++) {
+					proScaleX.push(Math.round(profiles[i].scale.x*30)/30);
+					profiles[i].scale.x=proScaleX[i];
+					proScaleY.push(Math.round(profiles[i].scale.y*30)/30);
+					profiles[i].scale.y=proScaleY[i];
+					proScaleZ.push(Math.round(profiles[i].scale.z*30)/30);
+					profiles[i].scale.z=proScaleZ[i];
+					profiles[i].position.set(Math.round(profiles[i].position.x),Math.round(profiles[i].position.y),Math.round(profiles[i].position.z));
+					proStartX.push(profiles[i].position.x-proScaleX[i]*15+15);
+					proStartY.push(profiles[i].position.y-proScaleY[i]*15+15);
+					proStartZ.push(profiles[i].position.z-proScaleZ[i]*15+15);
+					proEndX.push(profiles[i].position.x+proScaleX[i]*15-15);
+					proEndY.push(profiles[i].position.y+proScaleY[i]*15-15);
+					proEndZ.push(profiles[i].position.z+proScaleZ[i]*15-15);
+					proBox.push(new THREE.Box3().setFromObject(profiles[i]));
+					if (i!=0) {
+						indexJ.push(i);
+					}
+				}
+				var woodMaxX=[],woodMaxY=[],woodMaxZ=[];
+				for (var i = 0; i < woods.length; i++) {
+					woodMaxX.push(woods[i].position.x+woods[i].scale.x*15-15);
+					woodMaxY.push(woods[i].position.y+woods[i].scale.y*15-15);
+					woodMaxZ.push(woods[i].position.z+woods[i].scale.z*15-15);
+				}
+				var glassMaxX=[],glassMaxY=[],glassMaxZ=[];
+				for (var i = 0; i < glasses.length; i++) {
+					glassMaxX.push(glasses[i].position.x+glasses[i].scale.x*15-15);
+					glassMaxY.push(glasses[i].position.y+glasses[i].scale.y*15-15);
+					glassMaxZ.push(glasses[i].position.z+glasses[i].scale.z*15-15);
+				}
+				var clothMaxX=[],clothMaxY=[],clothMaxZ=[];
+				for (var i = 0; i < cloths.length; i++) {
+					clothMaxX.push(cloths[i].position.x+cloths[i].scale.x*15-15);
+					clothMaxY.push(cloths[i].position.y+cloths[i].scale.y*15-15);
+					clothMaxZ.push(cloths[i].position.z+cloths[i].scale.z*15-15);
+				}
+				numTest=0;valueTest=0;
+				while (isEmpty(indexJ)==false) {
+					for (var i = 0; i < indexI.length;i++) {
+						for (var j = 0; j < indexJ.length;) {
+							var numChange=0;
+							if (proBox[indexI[i]].intersectsBox ( proBox[indexJ[j]] )) {
+								//xyz
+								if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartX[indexJ[j]]=proStartX[indexI[i]];
+									proStartY[indexJ[j]]=proStartY[indexI[i]];
+									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(1);
+								}
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+									proEndX[indexJ[j]]=proStartX[indexI[i]];
+									proEndY[indexJ[j]]=proStartY[indexI[i]];
+									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(2);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartX[indexJ[j]]=proEndX[indexI[i]];
+									proStartY[indexJ[j]]=proEndY[indexI[i]];
+									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(3);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+
+									proEndX[indexJ[j]]=proEndX[indexI[i]];
+									proEndY[indexJ[j]]=proEndY[indexI[i]];
+									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(4);
+								}
+								//xy
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])>30) {
+									proStartX[indexJ[j]]=proStartX[indexI[i]];
+									proStartY[indexJ[j]]=proStartY[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(5);
+								}
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])>30) {
+									proEndX[indexJ[j]]=proStartX[indexI[i]];
+									proEndY[indexJ[j]]=proStartY[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(6);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])>30) {
+									proStartX[indexJ[j]]=proEndX[indexI[i]];
+									proStartY[indexJ[j]]=proEndY[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(7);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])>30) {
+									proEndX[indexJ[j]]=proEndX[indexI[i]];
+									proEndY[indexJ[j]]=proEndY[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(8);
+								}
+								//yz
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])>30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartY[indexJ[j]]=proStartY[indexI[i]];
+									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(9);
+								}
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])>30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+									proEndY[indexJ[j]]=proStartY[indexI[i]];
+									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(10);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])>30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartY[indexJ[j]]=proEndY[indexI[i]];
+									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(11);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])>30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+									proEndY[indexJ[j]]=proEndY[indexI[i]];
+									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(12);
+								}
+								//xz
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])>30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartX[indexJ[j]]=proStartX[indexI[i]];
+									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(13);
+								}
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])>30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+									proEndX[indexJ[j]]=proStartX[indexI[i]];
+									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(14);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])>30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+									proStartX[indexJ[j]]=proEndX[indexI[i]];
+									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(15);
+								}
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])>30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+									proEndX[indexJ[j]]=proEndX[indexI[i]];
+									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(16);
+								}
+								else {
+									alert('不要交叉!!!\n\n存在两线相交;请确保两线端点相交,或端点与直线相交');valueTest=1;break;
+								}
+							}
+							if (numChange==0) {
+								j++;//alert(17);
+							}
+						}
+					}
+					indexI=indexK;
+					indexK=[];
+					if (valueTest==1) {
+						break;
+					}
+					numTest++;
+					if (numTest==100000) {
+						alert('不要独立模块!!!\n\n存在不与任何其他模块相交的独立模块;请确保每个模块至少与其他至少一块相交');break;
+					}
+				}
+				for (var i = 0; i < profiles.length; i++) {
+					profiles[i].position.x=proStartX[i]+proScaleX[i]*15-15;
+					profiles[i].position.y=proStartY[i]+proScaleY[i]*15-15;
+					profiles[i].position.z=proStartZ[i]+proScaleZ[i]*15-15;
+				}
+				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&woods) {
+					for (var i = 0; i < woods.length; i++) {
+						for (var j = 0; j < profiles.length; j++) {
+							if (Math.abs(proStartX[j]-woodMaxX[i])<30 && Math.abs(proStartY[j]-woodMaxY[i])<30 && Math.abs(proStartZ[j]-woodMaxZ[i])<30) {
+								woods[i].position.x=proStartX[j]-woods[i].scale.x*15+15;
+								woods[i].position.y=proStartY[j]-woods[i].scale.y*15+15;
+								woods[i].position.z=proStartZ[j]-woods[i].scale.z*15+15;
+							}
+							else if (Math.abs(proEndX[j]-woodMaxX[i])<30 && Math.abs(proEndY[j]-woodMaxY[i])<30 && Math.abs(proEndZ[j]-woodMaxZ[i])<30) {
+								woods[i].position.x=proEndX[j]-woods[i].scale.x*15+15;
+								woods[i].position.y=proEndY[j]-woods[i].scale.y*15+15;
+								woods[i].position.z=proEndZ[j]-woods[i].scale.z*15+15;
+							}
+						}
+					}
+				}
+				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&glasses) {
+					for (var i = 0; i < glasses.length; i++) {
+						for (var j = 0; j < profiles.length; j++) {
+							if (Math.abs(proStartX[j]-glassMaxX[i])<30 && Math.abs(proStartY[j]-glassMaxY[i])<30 && Math.abs(proStartZ[j]-glassMaxZ[i])<30) {
+								glasses[i].position.x=proStartX[j]-glasses[i].scale.x*15+15;
+								glasses[i].position.y=proStartY[j]-glasses[i].scale.y*15+15;
+								glasses[i].position.z=proStartZ[j]-glasses[i].scale.z*15+15;
+							}
+							else if (Math.abs(proEndX[j]-glassMaxX[i])<30 && Math.abs(proEndY[j]-glassMaxY[i])<30 && Math.abs(proEndZ[j]-glassMaxZ[i])<30) {
+								glasses[i].position.x=proEndX[j]-glasses[i].scale.x*15+15;
+								glasses[i].position.y=proEndY[j]-glasses[i].scale.y*15+15;
+								glasses[i].position.z=proEndZ[j]-glasses[i].scale.z*15+15;
+							}
+						}
+					}
+				}
+				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&cloths) {
+					for (var i = 0; i < cloths.length; i++) {
+						for (var j = 0; j < profiles.length; j++) {
+							if (Math.abs(proStartX[j]-clothMaxX[i])<30 && Math.abs(proStartY[j]-clothMaxY[i])<30 && Math.abs(proStartZ[j]-clothMaxZ[i])<30) {
+								cloths[i].position.x=proStartX[j]-cloths[i].scale.x*15+15;
+								cloths[i].position.y=proStartY[j]-cloths[i].scale.y*15+15;
+								cloths[i].position.z=proStartZ[j]-cloths[i].scale.z*15+15;
+							}
+							else if (Math.abs(proEndX[j]-clothMaxX[i])<30 && Math.abs(proEndY[j]-clothMaxY[i])<30 && Math.abs(proEndZ[j]-clothMaxZ[i])<30) {
+								cloths[i].position.x=proEndX[j]-cloths[i].scale.x*15+15;
+								cloths[i].position.y=proEndY[j]-cloths[i].scale.y*15+15;
+								cloths[i].position.z=proEndZ[j]-cloths[i].scale.z*15+15;
+							}
+						}
+					}
+				}
+				render();
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>
