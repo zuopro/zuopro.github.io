@@ -142,6 +142,7 @@
 
         //event
 				if (isTouchDevice()) {
+					document.addEventListener( 'touchmove', onDocumentMouseMove, false );
 					document.addEventListener( 'touchend', onDocumentMouseDown, false );
 				}
 				else {
