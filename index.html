@@ -142,8 +142,8 @@
 				orbitControls.addEventListener('change', render);
 
         //event
-				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'touchmove', onDocumentMouseMove, false );
+				document.addEventListener( 'touchstart', onDocumentMouseDown, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
 
@@ -407,7 +407,7 @@
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
-									transformAxis.addEventListener('mouseDown', function () {
+									transformAxis.addEventListener('touchstart', function () {
     								orbitControls.enabled = false;
 									});
 									transformAxis.addEventListener('mouseUp', function () {
@@ -496,7 +496,7 @@
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
 									transformAxis.setMode('scale');
-									transformAxis.addEventListener('mouseDown', function () {
+									transformAxis.addEventListener('touchstart', function () {
     								orbitControls.enabled = false;
 									});
 									transformAxis.addEventListener('mouseUp', function () {
