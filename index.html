@@ -168,10 +168,10 @@
 
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
-				alert(event.changeTouches[0].clientX);
+				
 				if (isTouchDevice()) {
-					mouse.set( ( event.changeTouches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.changeTouches[0].clientY / window.innerHeight ) * 2 + 1 );
-					alert(event.changeTouches[0].clientX);alert(event.touches[0].clientX);
+					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
+					alert(event.touches[0].clientX);alert(event.touches[0].clientX);
 				}
 				else {
 					mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
@@ -188,6 +188,7 @@
 
 			function onDocumentMouseDown( event ) {
 				//event.preventDefault();
+				alert(event.changeTouches[0].clientX);
 				if (isTouchDevice()) {
 					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
 				}
