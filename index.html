@@ -161,7 +161,6 @@
 
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
-				orbitControls.enabled = false;
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
@@ -188,7 +187,7 @@
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
 				var intersect = intersects[0];
-				var isLast=true;
+				var isLast=true;alert(intersects.length);
 
 				if ( intersects.length > 0 && objects.length>0) {
 					//Mode
@@ -409,10 +408,10 @@
 									transformAxis.attach( intersect.object );
 									transformAxis.addEventListener('mouseDown', function () {
     								orbitControls.enabled = false;
-									});alert('1');
+									});
 									transformAxis.addEventListener('mouseUp', function () {
     								orbitControls.enabled = true;
-									});alert('2');
+									});
 
 									scene.add( transformAxis );
 								}
@@ -429,7 +428,6 @@
 								else if (cloths.indexOf(intersect.object)!=-1) {
 									objNum='沙发或布面 '+cloths.indexOf(intersect.object);
 								}
-								alert('3');
                 if (guiMove==null) {
 									guiMoveControl =  {
 										'序号' : objNum,
@@ -455,7 +453,6 @@
                     intersect.object.position.z = guiMoveControl.midZ;
                     transformAxis.attach( intersect.object );
                   });
-									console.log(intersect.object.position);
 									var updateMove = function() {
 										guiMoveControl.objectNumber = objNum;
 										intersect.object.position.x = Math.floor(intersect.object.position.x/5)*5;
@@ -472,7 +469,6 @@
 									mZ.listen();
                 }
 							}
-							console.log(intersect.object.position);
 							break;
 
 						case isZoom:
