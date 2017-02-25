@@ -143,7 +143,7 @@
         //event
 				if (isTouchDevice()) {
 					document.addEventListener( 'touchmove', onDocumentMouseMove, false );
-					document.addEventListener( 'touchend', onDocumentMouseDown, false );alert(isTouchDevice());
+					document.addEventListener( 'touchstart', onDocumentMouseDown, false );alert(isTouchDevice());
 				}
 				else {
 					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -169,7 +169,7 @@
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
 				if (isTouchDevice()) {
-					mouse.set( ( event.changeTouches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.changeTouches[0].clientY / window.innerHeight ) * 2 + 1 );
+					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );alert('op');
 				}
 				else {
 					mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
