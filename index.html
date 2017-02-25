@@ -218,7 +218,7 @@
 							else if (guiModeControl.Mode=='对齐 [G]') {
 								isAdd=false;isSub=false;isMove=false;isZoom=false;isAlign=true;
 							}
-						});alert('1');
+						});
 						function updateMode() {
 							if (isAdd) {
 								guiModeControl.Mode = '添加 [A]';
@@ -239,14 +239,14 @@
 						}
 						updateMode();
 					}
-                        alert('2');
+                        
 					switch (true) {
 						case isAdd:
-							objects.addEventListener('mouseDown', function () {
-    								orbitControls.enabled = false;
-							});
-							objects.addEventListener('mouseUp', function () {
-    								orbitControls.enabled = true;
+							//objects.addEventListener('mouseDown', function () {
+    							//	orbitControls.enabled = false;
+							//});
+							//objects.addEventListener('mouseUp', function () {
+    							//	orbitControls.enabled = true;}
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -346,7 +346,6 @@
 		              cloths.push( cloth );
 								}
 							}
-							alert('3');
 							break;
 
 						case isSub:
@@ -506,7 +505,7 @@
 								guiMaterial.destroy();
 								guiMaterial=null;
 							}
-							numAlign=0;alert('4');
+							numAlign=0;
 							if (intersect.object != plane) {
 								if (transformAxis==null) {
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
@@ -524,7 +523,7 @@
 									});
 									transformAxis.addEventListener('touchend', function () {
     								orbitControls.enabled = true;
-									});alert('5');
+									});
 									scene.add( transformAxis );
 								}
 								var objNum;
