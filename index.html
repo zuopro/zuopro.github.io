@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>zuo</title>
+		<title>ZUO</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -15,11 +15,14 @@
 		</style>
 	</head>
 	<body>
+		<link rel='stylesheet' href="css/threejs.css" type="text/css">
 		<script src="lib/three.js"></script>
     <script src="lib/TransformControls.js"></script>
 		<script src="lib/OrbitControls.js"></script>
     <script src="lib/stats.js"></script>
     <script src="lib/dat.gui.js"></script>
+
+
 		<script>
 
 			var container;
@@ -30,9 +33,11 @@
 			var isAdd=true,isSub=false,isMove=false,isZoom=false,isAlign=false,isInput=false;
 			var isProfile=true,isWood=false,isGlass=false,isCloth=false;
 			var helperMesh, helperMaterial;
-			var allGeometry, profileMaterial,woodMaterial,glassMaterial,clothMaterial;
+			var profileMaterial,woodMaterial,glassMaterial,clothMaterial;
+			var unitGeometry;
 			var objects = [],profiles = [],woods = [],glasses = [],cloths = [];
 			var numAlign=0;
+			var proC=30;
 
 			var transformAxis;
 			var guiMode,guiModeControl,guiMaterial,guiMaterialControl,guiMove,guiMoveControl,guiZoom,guiZoomControl;
@@ -83,13 +88,13 @@
 				scene.add( directionalLight );
 
         // helper
-				helperGeo = new THREE.BoxGeometry( 30, 30, 30 );
+				helperGeo = new THREE.BoxGeometry( proC, proC, proC );
 				helperMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000, opacity: 0.5, transparent: true } );
 				helperMesh = new THREE.Mesh( helperGeo, helperMaterial );
 				scene.add( helperMesh );
 
 				// mesh
-				allGeometry = new THREE.BoxGeometry( 30, 30, 30 );
+				unitGeometry = new THREE.BoxGeometry( 1, 1, 1 );
 				profileMaterial = new THREE.MeshLambertMaterial( { color: 0xcccccc, opacity: 0.9, transparent: true } );
 				woodMaterial = new THREE.MeshLambertMaterial( { color: 0xdeb887, opacity: 0.9, transparent: true } );
 				glassMaterial = new THREE.MeshLambertMaterial( { color: 0xbfefff, opacity: 0.7, transparent: true } );
@@ -134,12 +139,15 @@
 
         //orbitControls
         var orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+				orbitControls.addEventListener('change', render);
 
         //event
 				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
+				document.addEventListener('touchstart',TouchAll, false);
+    		document.addEventListener('touchmove',TouchAll, false);
 
 
 			}
@@ -150,8 +158,19 @@
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
+			function TouchAll(event){
+				switch(event.type){
+					case 'touchstart':
+						onDocumentMouseDown();
+						break;
+					case 'touchmove':
+						onDocumentMouseMove();
+						break;
+				}
+			}
 
 			function onDocumentMouseMove( event ) {
+				
 				//event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
@@ -159,7 +178,9 @@
         if ( intersects.length > 0 ) {
           var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+					//helperMesh.position.set(Math.floor(helperMesh.position.x/10)*10,Math.floor(helperMesh.position.y/10)*10+20,Math.floor(helperMesh.position.z/10)*10);
+					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+
 				}
 				render();
 			}
@@ -176,49 +197,49 @@
 					//Mode
 					if (guiMode==null) {
 						guiModeControl =  {
-							Mode : 'Add [A]',
+							Mode : '添加 [A]',
 						};
 						guiMode = new dat.GUI();
-						var gM=guiMode.add(guiModeControl, 'Mode',  [ 'Add [A]', 'Subtract [S]', 'Move [D]', 'Zoom [F]','Align [G]'] );
+						var gM=guiMode.add(guiModeControl, 'Mode',  [ '添加 [A]', '删除 [S]', '移动 [D]', '缩放 [F]','对齐 [G]'] );
 						gM.listen();
 						gM.onChange(function (value) {
-							if (guiModeControl.Mode=='Add [A]') {
+							if (guiModeControl.Mode=='添加 [A]') {
 								isAdd=true;isSub=false;isMove=false;isZoom=false;isAlign=false;
 							}
-							else if (guiModeControl.Mode=='Subtract [S]') {
+							else if (guiModeControl.Mode=='删除 [S]') {
 								isAdd=false;isSub=true;isMove=false;isZoom=false;isAlign=false;
 							}
-							else if (guiModeControl.Mode=='Move [D]') {
+							else if (guiModeControl.Mode=='移动 [D]') {
 								isAdd=false;isSub=false;isMove=true;isZoom=false;isAlign=false;
 							}
-							else if (guiModeControl.Mode=='Zoom [F]') {
+							else if (guiModeControl.Mode=='缩放 [F]') {
 								isAdd=false;isSub=false;isMove=false;isZoom=true;isAlign=false;
 							}
-							else if (guiModeControl.Mode=='Align [G]') {
+							else if (guiModeControl.Mode=='对齐 [G]') {
 								isAdd=false;isSub=false;isMove=false;isZoom=false;isAlign=true;
 							}
-						});
+						});alert('1');
 						function updateMode() {
 							if (isAdd) {
-								guiModeControl.Mode = 'Add [A]';
+								guiModeControl.Mode = '添加 [A]';
 							}
 							else if (isSub) {
-								guiModeControl.Mode = 'Subtract [S]';
+								guiModeControl.Mode = '删除 [S]';
 							}
 							else if (isMove) {
-								guiModeControl.Mode = 'Move [D]';
+								guiModeControl.Mode = '移动 [D]';
 							}
 							else if (isZoom) {
-								guiModeControl.Mode = 'Zoom [F]';
+								guiModeControl.Mode = '缩放 [F]';
 							}
 							else if (isAlign) {
-								guiModeControl.Mode = 'Align [G]';
+								guiModeControl.Mode = '对齐 [G]';
 							}
 							requestAnimationFrame(updateMode);
 						}
 						updateMode();
 					}
-
+                        alert('2');
 					switch (true) {
 						case isAdd:
 							if (transformAxis) {
@@ -241,38 +262,38 @@
 							//Material gui
 							if (guiMaterial==null) {
 								guiMaterialControl =  {
-									Material : 'Add Profile [1]',
+									Material : '铝型材 [1]',
 								};
 								guiMaterial = new dat.GUI();
-								var gMat=guiMaterial.add(guiMaterialControl, 'Material',  [ 'Add Profile [1]', 'Add Wood [2]', 'Add Glass [3]', 'Add Cloth [4]' ] );
+								var gMat=guiMaterial.add(guiMaterialControl, 'Material',  [ '铝型材 [1]', '原木面 [2]', '玻璃面 [3]', '沙发或布面 [4]' ] );
 							}
 							gMat.listen();
 							gMat.onChange(function (value) {
-								if (guiMaterialControl.Material=='Add Profile [1]') {
+								if (guiMaterialControl.Material=='铝型材 [1]') {
 									isProfile=true;isWood=false;isGlass=false;isCloth=false;
 								}
-								else if (guiMaterialControl.Material=='Add Wood [2]') {
+								else if (guiMaterialControl.Material=='原木面 [2]') {
 									isProfile=false;isWood=true;isGlass=false;isCloth=false;
 								}
-								else if (guiMaterialControl.Material=='Add Glass [3]') {
+								else if (guiMaterialControl.Material=='玻璃面 [3]') {
 									isProfile=false;isWood=false;isGlass=true;isCloth=false;
 								}
-								else if (guiMaterialControl.Material=='Add Cloth [4]') {
+								else if (guiMaterialControl.Material=='沙发或布面 [4]') {
 									isProfile=false;isWood=false;isGlass=false;isCloth=true;
 								}
 							});
 							function updateMaterial() {
 								if (isProfile) {
-									guiMaterialControl.Material = 'Add Profile [1]';
+									guiMaterialControl.Material = '铝型材 [1]';
 								}
 								else if (isWood) {
-									guiMaterialControl.Material = 'Add Wood [2]';
+									guiMaterialControl.Material = '原木面 [2]';
 								}
 								else if (isGlass) {
-									guiMaterialControl.Material = 'Add Glass [3]';
+									guiMaterialControl.Material = '玻璃面 [3]';
 								}
 								else if (isCloth) {
-									guiMaterialControl.Material = 'Add Cloth [4]';
+									guiMaterialControl.Material = '沙发或布面 [4]';
 								}
 								requestAnimationFrame(updateMaterial);
 							}
@@ -280,38 +301,47 @@
 							//Add material
 							if (objects.length!=1) {
 								if (isProfile) {
-									var profile = new THREE.Mesh( allGeometry, profileMaterial );
+									var profile = new THREE.Mesh( unitGeometry, profileMaterial );
+									profile.scale.set(proC,proC,proC);
 									profile.position.copy( intersect.point ).add( intersect.face.normal );
-									profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+									//profile.position.set(Math.floor(profile.position.x/10)*10,Math.floor(profile.position.y/10)*10+20,Math.floor(profile.position.z/10)*10);
 									scene.add( profile );
 									objects.push( profile );
 		              profiles.push( profile );
 								}
 								else if (isWood) {
-									var wood = new THREE.Mesh( allGeometry, woodMaterial );
+									var wood = new THREE.Mesh( unitGeometry, woodMaterial );
+									wood.scale.set(proC,proC,proC);
 									wood.position.copy( intersect.point ).add( intersect.face.normal );
-									wood.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									wood.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+									//wood.position.set(Math.floor(wood.position.x/10)*10,Math.floor(wood.position.y/10)*10+20,Math.floor(wood.position.z/10)*10);
 									scene.add( wood );
 									objects.push( wood );
 		              woods.push( wood );
 								}
 								else if (isGlass) {
-									var glass = new THREE.Mesh( allGeometry, glassMaterial );
+									var glass = new THREE.Mesh( unitGeometry, glassMaterial );
+									glass.scale.set(proC,proC,proC);
 									glass.position.copy( intersect.point ).add( intersect.face.normal );
-									glass.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									glass.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+									//glass.position.set(Math.floor(glass.position.x/10)*10,Math.floor(glass.position.y/10)*10+20,Math.floor(glass.position.z/10)*10);
 									scene.add( glass );
 									objects.push( glass );
 		              glasses.push( glass );
 								}
 								else if (isCloth) {
-									var cloth = new THREE.Mesh( allGeometry, clothMaterial );
+									var cloth = new THREE.Mesh( unitGeometry, clothMaterial );
+									cloth.scale.set(proC,proC,proC);
 									cloth.position.copy( intersect.point ).add( intersect.face.normal );
-									cloth.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+									cloth.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+									//cloth.position.set(Math.floor(cloth.position.x/10)*10,Math.floor(cloth.position.y/10)*10+20,Math.floor(cloth.position.z/10)*10);
 									scene.add( cloth );
 									objects.push( cloth );
 		              cloths.push( cloth );
 								}
 							}
+							alert('3');
 							break;
 
 						case isSub:
@@ -381,30 +411,43 @@
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
+									transformAxis.addEventListener('mouseDown', function () {
+    								orbitControls.enabled = false;
+									});
+									transformAxis.addEventListener('mouseUp', function () {
+    								orbitControls.enabled = true;
+									});
+									transformAxis.addEventListener('touchstart', function () {
+    								orbitControls.enabled = false;
+									});
+									transformAxis.addEventListener('touchend', function () {
+    								orbitControls.enabled = true;
+									});
 									scene.add( transformAxis );
 								}
 
 								if (profiles.indexOf(intersect.object)!=-1) {
-									objNum='Profile '+profiles.indexOf(intersect.object);
+									objNum='铝型材 '+profiles.indexOf(intersect.object);
 								}
 								else if (woods.indexOf(intersect.object)!=-1) {
-									objNum='Wood '+woods.indexOf(intersect.object);
+									objNum='原木面 '+woods.indexOf(intersect.object);
 								}
 								else if (glasses.indexOf(intersect.object)!=-1) {
-									objNum='Glass '+glasses.indexOf(intersect.object);
+									objNum='玻璃面 '+glasses.indexOf(intersect.object);
 								}
 								else if (cloths.indexOf(intersect.object)!=-1) {
-									objNum='Cloth '+cloths.indexOf(intersect.object);
+									objNum='沙发或布面 '+cloths.indexOf(intersect.object);
 								}
+								console.log(intersect.object.position);
                 if (guiMove==null) {
 									guiMoveControl =  {
-										objectNumber : objNum,
+										'序号' : objNum,
  										midX : intersect.object.position.x,
  										midY : intersect.object.position.y,
  										midZ : intersect.object.position.z,
 									};
                   guiMove = new dat.GUI();
-                  guiMove.add(guiMoveControl, 'objectNumber');
+                  guiMove.add(guiMoveControl, '序号');
                   mX = guiMove.add(guiMoveControl, 'midX', -1000, 1000).step(10);
                   mY = guiMove.add(guiMoveControl, 'midY', 0, 2000).step(10);
                   mZ = guiMove.add(guiMoveControl, 'midZ', -1000, 1000).step(10);
@@ -421,8 +464,12 @@
                     intersect.object.position.z = guiMoveControl.midZ;
                     transformAxis.attach( intersect.object );
                   });
+									console.log(intersect.object.position);
 									var updateMove = function() {
 										guiMoveControl.objectNumber = objNum;
+										intersect.object.position.x = Math.floor(intersect.object.position.x/5)*5;
+										intersect.object.position.y = Math.floor(intersect.object.position.y/5)*5;
+										intersect.object.position.z = Math.floor(intersect.object.position.z/5)*5;
 										guiMoveControl.midX = intersect.object.position.x;
 										guiMoveControl.midY = intersect.object.position.y;
 										guiMoveControl.midZ = intersect.object.position.z;
@@ -434,6 +481,7 @@
 									mZ.listen();
                 }
 							}
+							console.log(intersect.object.position);
 							break;
 
 						case isZoom:
@@ -453,77 +501,96 @@
 								guiMaterial.destroy();
 								guiMaterial=null;
 							}
-							numAlign=0;
+							numAlign=0;alert('4');
 							if (intersect.object != plane) {
 								if (transformAxis==null) {
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
 									transformAxis.setMode('scale');
+									transformAxis.addEventListener('mouseDown', function () {
+    								orbitControls.enabled = false;
+									});
+									transformAxis.addEventListener('mouseUp', function () {
+    								orbitControls.enabled = true;
+									});
+									transformAxis.addEventListener('touchstart', function () {
+    								orbitControls.enabled = false;
+									});
+									transformAxis.addEventListener('touchend', function () {
+    								orbitControls.enabled = true;
+									});alert('5');
 									scene.add( transformAxis );
 								}
 								var objNum;
 								if (profiles.indexOf(intersect.object)!=-1) {
-									objNum='Profile '+profiles.indexOf(intersect.object);
+									objNum='铝型材 '+profiles.indexOf(intersect.object);
 								}
 								else if (woods.indexOf(intersect.object)!=-1) {
-									objNum='Wood '+woods.indexOf(intersect.object);
+									objNum='原木面 '+woods.indexOf(intersect.object);
 								}
 								else if (glasses.indexOf(intersect.object)!=-1) {
-									objNum='Glass '+glasses.indexOf(intersect.object);
+									objNum='玻璃面 '+glasses.indexOf(intersect.object);
 								}
 								else if (cloths.indexOf(intersect.object)!=-1) {
-									objNum='Cloth '+cloths.indexOf(intersect.object);
+									objNum='沙发或布面 '+cloths.indexOf(intersect.object);
 								}
+
                 if (guiZoom==null) {
                   guiZoomControl =  {
-                    objectNumber : objNum,
-                    sizeX : intersect.object.scale.x*30,
-                    sizeY : intersect.object.scale.y*30,
-                    sizeZ : intersect.object.scale.z*30,
+                    '序号' : objNum,
+                    sizeX : intersect.object.scale.x,
+                    sizeY : intersect.object.scale.y,
+                    sizeZ : intersect.object.scale.z,
                   };
                   guiZoom = new dat.GUI();
-                  guiZoom.add(guiZoomControl, 'objectNumber');
-                  sX = guiZoom.add(guiZoomControl, 'sizeX', 30, 2000).step(10);
-                  sY = guiZoom.add(guiZoomControl, 'sizeY', 30, 2000).step(10);
-                  sZ = guiZoom.add(guiZoomControl, 'sizeZ', 30, 2000).step(10);
+                  guiZoom.add(guiZoomControl, '序号');
+                  sX = guiZoom.add(guiZoomControl, 'sizeX', proC, 2000).step(10);
+                  sY = guiZoom.add(guiZoomControl, 'sizeY', proC, 2000).step(10);
+                  sZ = guiZoom.add(guiZoomControl, 'sizeZ', proC, 2000).step(10);
+
+
 
                   sX.onChange(function (value) {
-                    intersect.object.scale.x = guiZoomControl.sizeX/30;
+                    intersect.object.scale.x = guiZoomControl.sizeX;
                     transformAxis.attach( intersect.object );
                   });
                   sY.onChange(function (value) {
-                    intersect.object.scale.y = guiZoomControl.sizeY/30;
+                    intersect.object.scale.y = guiZoomControl.sizeY;
                     transformAxis.attach( intersect.object );
                   });
                   sZ.onChange(function (value) {
-                    intersect.object.scale.z = guiZoomControl.sizeZ/30;
+                    intersect.object.scale.z = guiZoomControl.sizeZ;
                     transformAxis.attach( intersect.object );
                   });
                   function updateZoom() {
+
 										if (profiles.indexOf(intersect.object)!=-1) {
-											if ((intersect.object.scale.x!=1&&intersect.object.scale.y!=1)||(intersect.object.scale.y!=1&&intersect.object.scale.z!=1)||(intersect.object.scale.z!=1&&intersect.object.scale.x!=1)||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1) {
-												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											if (intersect.object.scale.x!=proC&&intersect.object.scale.y!=proC||intersect.object.scale.y!=proC&&intersect.object.scale.z!=proC||intersect.object.scale.z!=proC&&intersect.object.scale.x!=proC||intersect.object.scale.x<proC||intersect.object.scale.y<proC||intersect.object.scale.z<proC) {
+												intersect.object.scale.x=proC;intersect.object.scale.y=proC;intersect.object.scale.z=proC;
 											}
 										}
 										else if (woods.indexOf(intersect.object)!=-1) {
-											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
-												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											if (intersect.object.scale.x!=proC&&intersect.object.scale.y!=proC&&intersect.object.scale.z!=proC||intersect.object.scale.x<proC||intersect.object.scale.y<proC||intersect.object.scale.z<proC){
+												intersect.object.scale.x=proC;intersect.object.scale.y=proC;intersect.object.scale.z=proC;
 											}
 										}
 										else if (glasses.indexOf(intersect.object)!=-1) {
-											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
-												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											if (intersect.object.scale.x!=proC&&intersect.object.scale.y!=proC&&intersect.object.scale.z!=proC||intersect.object.scale.x<proC||intersect.object.scale.y<proC||intersect.object.scale.z<proC){
+												intersect.object.scale.x=proC;intersect.object.scale.y=proC;intersect.object.scale.z=proC;
 											}
 										}
 										else if (cloths.indexOf(intersect.object)!=-1) {
-											if (intersect.object.scale.x!=1&&intersect.object.scale.y!=1&&intersect.object.scale.z!=1||intersect.object.scale.x<1||intersect.object.scale.y<1||intersect.object.scale.z<1){
-												intersect.object.scale.x=1;intersect.object.scale.y=1;intersect.object.scale.z=1;
+											if (intersect.object.scale.x!=proC&&intersect.object.scale.y!=proC&&intersect.object.scale.z!=proC||intersect.object.scale.x<proC||intersect.object.scale.y<proC||intersect.object.scale.z<proC){
+												intersect.object.scale.x=proC;intersect.object.scale.y=proC;intersect.object.scale.z=proC;
 											}
 										}
-                    guiZoomControl.sizeX = intersect.object.scale.x*30;
-                    guiZoomControl.sizeY = intersect.object.scale.y*30;
-                    guiZoomControl.sizeZ = intersect.object.scale.z*30;
+										intersect.object.scale.x = Math.floor(intersect.object.scale.x/10)*10;
+										intersect.object.scale.y = Math.floor(intersect.object.scale.y/10)*10;
+										intersect.object.scale.z = Math.floor(intersect.object.scale.z/10)*10;
+                    guiZoomControl.sizeX = intersect.object.scale.x;
+                    guiZoomControl.sizeY = intersect.object.scale.y;
+                    guiZoomControl.sizeZ = intersect.object.scale.z;
                     requestAnimationFrame(updateZoom);
                   }
                   updateZoom();
@@ -559,12 +626,14 @@
 					}
 				}
 				if (objects.length==1&&isLast) {
-					var profile = new THREE.Mesh( allGeometry, profileMaterial );
+					var profile = new THREE.Mesh( unitGeometry, profileMaterial );
+					profile.scale.set(proC,proC,proC);
 					profile.position.copy( intersect.point ).add( intersect.face.normal );
-					profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( 15 );
+					profile.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
+					//profile.position.set(Math.floor(profile.position.x/10)*10,Math.floor(profile.position.y/10)*10+20,Math.floor(profile.position.z/10)*10);
 					scene.add( profile );
 					objects.push( profile );
-					profiles.push( profile );
+					profiles.push( profile );console.log(intersect.object.position);
 				}
         render();
 			}
@@ -648,13 +717,13 @@
 						objects.splice( objects.indexOf( cloths[i] ), 1 );
 					}cloths=[];
 				}
-				var inData=JSON.parse(prompt("取消:\n移除当前模型\n\n好:\n保存模型,或输入新模型",outData));
+				var inData=JSON.parse(prompt("取消:\n删除当前模型 ! ! !\n\n好:\n保存模型,或输入新模型",outData));
 
 				if (inData!=null && inData!=""){
 					if (inData['pro']!=[]) {
 						profiles=[];
 						for (var i = 0; i < inData['pro'].length; i++) {
-							profiles[i] = new THREE.Mesh( allGeometry, profileMaterial );
+							profiles[i] = new THREE.Mesh( unitGeometry, profileMaterial );
 							profiles[i].position.x=inData['pro'][i][0][0];profiles[i].position.y=inData['pro'][i][0][1];profiles[i].position.z=inData['pro'][i][0][2];
 							profiles[i].scale.x=inData['pro'][i][1][0];profiles[i].scale.y=inData['pro'][i][1][1];profiles[i].scale.z=inData['pro'][i][1][2];
 							scene.add( profiles[i] );
@@ -664,7 +733,7 @@
 					else if (inData['woo']!=[]) {
 						woods=[];
 						for (var i = 0; i < inData['woo'].length; i++) {
-							woods[i] = new THREE.Mesh( allGeometry, profileMaterial );
+							woods[i] = new THREE.Mesh( unitGeometry, profileMaterial );
 							woods[i].position.x=inData['woo'][i][0][0];woods[i].position.y=inData['woo'][i][0][1];woods[i].position.z=inData['woo'][i][0][2];
 							woods[i].scale.x=inData['woo'][i][1][0];woods[i].scale.y=inData['woo'][i][1][1];woods[i].scale.z=inData['woo'][i][1][2];
 							scene.add( woods[i] );
@@ -674,7 +743,7 @@
 					else if (inData['gla']!=[]) {
 						glasses=[];
 						for (var i = 0; i < inData['gla'].length; i++) {
-							glasses[i] = new THREE.Mesh( allGeometry, glafileMaterial );
+							glasses[i] = new THREE.Mesh( unitGeometry, glafileMaterial );
 							glasses[i].position.x=inData['gla'][i][0][0];glasses[i].position.y=inData['gla'][i][0][1];glasses[i].position.z=inData['gla'][i][0][2];
 							glasses[i].scale.x=inData['gla'][i][1][0];glasses[i].scale.y=inData['gla'][i][1][1];glasses[i].scale.z=inData['gla'][i][1][2];
 							scene.add( glasses[i] );
@@ -684,7 +753,7 @@
 					else if (inData['clo']!=[]) {
 						cloths=[];
 						for (var i = 0; i < inData['clo'].length; i++) {
-							cloths[i] = new THREE.Mesh( allGeometry, clofileMaterial );
+							cloths[i] = new THREE.Mesh( unitGeometry, clofileMaterial );
 							cloths[i].position.x=inData['clo'][i][0][0];cloths[i].position.y=inData['clo'][i][0][1];cloths[i].position.z=inData['clo'][i][0][2];
 							cloths[i].scale.x=inData['clo'][i][1][0];cloths[i].scale.y=inData['clo'][i][1][1];cloths[i].scale.z=inData['clo'][i][1][2];
 							scene.add( cloths[i] );
@@ -696,7 +765,7 @@
 			}
 
 			function alignAll(){
-				var proScaleX= [],proScaleY= [],proScaleZ= [];
+
 				var proStartX= [],proStartY= [],proStartZ= [];
 				var proEndX= [],proEndY= [],proEndZ= [];
 				var proBox=[];
@@ -706,19 +775,15 @@
 				}
 				//X dimensionality reduction
 				for (var i = 0; i < profiles.length; i++) {
-					proScaleX.push(Math.round(profiles[i].scale.x*30)/30);
-					profiles[i].scale.x=proScaleX[i];
-					proScaleY.push(Math.round(profiles[i].scale.y*30)/30);
-					profiles[i].scale.y=proScaleY[i];
-					proScaleZ.push(Math.round(profiles[i].scale.z*30)/30);
-					profiles[i].scale.z=proScaleZ[i];
-					profiles[i].position.set(Math.round(profiles[i].position.x),Math.round(profiles[i].position.y),Math.round(profiles[i].position.z));
-					proStartX.push(profiles[i].position.x-proScaleX[i]*15+15);
-					proStartY.push(profiles[i].position.y-proScaleY[i]*15+15);
-					proStartZ.push(profiles[i].position.z-proScaleZ[i]*15+15);
-					proEndX.push(profiles[i].position.x+proScaleX[i]*15-15);
-					proEndY.push(profiles[i].position.y+proScaleY[i]*15-15);
-					proEndZ.push(profiles[i].position.z+proScaleZ[i]*15-15);
+
+					proStartX.push(profiles[i].position.x-profiles[i].scale.x/2+proC/2);
+					proStartY.push(profiles[i].position.y-profiles[i].scale.y/2+proC/2);
+					proStartZ.push(profiles[i].position.z-profiles[i].scale.z/2+proC/2);
+
+					proEndX.push(profiles[i].position.x+profiles[i].scale.x/2-proC/2);
+					proEndY.push(profiles[i].position.y+profiles[i].scale.y/2-proC/2);
+					proEndZ.push(profiles[i].position.z+profiles[i].scale.z/2-proC/2);
+
 					proBox.push(new THREE.Box3().setFromObject(profiles[i]));
 					if (i!=0) {
 						indexJ.push(i);
@@ -726,21 +791,21 @@
 				}
 				var woodMaxX=[],woodMaxY=[],woodMaxZ=[];
 				for (var i = 0; i < woods.length; i++) {
-					woodMaxX.push(woods[i].position.x+woods[i].scale.x*15-15);
-					woodMaxY.push(woods[i].position.y+woods[i].scale.y*15-15);
-					woodMaxZ.push(woods[i].position.z+woods[i].scale.z*15-15);
+					woodMaxX.push(woods[i].position.x+woods[i].scale.x/2-proC/2);
+					woodMaxY.push(woods[i].position.y+woods[i].scale.y/2-proC/2);
+					woodMaxZ.push(woods[i].position.z+woods[i].scale.z/2-proC/2);
 				}
 				var glassMaxX=[],glassMaxY=[],glassMaxZ=[];
 				for (var i = 0; i < glasses.length; i++) {
-					glassMaxX.push(glasses[i].position.x+glasses[i].scale.x*15-15);
-					glassMaxY.push(glasses[i].position.y+glasses[i].scale.y*15-15);
-					glassMaxZ.push(glasses[i].position.z+glasses[i].scale.z*15-15);
+					glassMaxX.push(glasses[i].position.x+glasses[i].scale.x/2-proC/2);
+					glassMaxY.push(glasses[i].position.y+glasses[i].scale.y/2-proC/2);
+					glassMaxZ.push(glasses[i].position.z+glasses[i].scale.z/2-proC/2);
 				}
 				var clothMaxX=[],clothMaxY=[],clothMaxZ=[];
 				for (var i = 0; i < cloths.length; i++) {
-					clothMaxX.push(cloths[i].position.x+cloths[i].scale.x*15-15);
-					clothMaxY.push(cloths[i].position.y+cloths[i].scale.y*15-15);
-					clothMaxZ.push(cloths[i].position.z+cloths[i].scale.z*15-15);
+					clothMaxX.push(cloths[i].position.x+cloths[i].scale.x/2-proC/2);
+					clothMaxY.push(cloths[i].position.y+cloths[i].scale.y/2-proC/2);
+					clothMaxZ.push(cloths[i].position.z+cloths[i].scale.z/2-proC/2);
 				}
 				numTest=0;valueTest=0;
 				while (isEmpty(indexJ)==false) {
@@ -749,128 +814,128 @@
 							var numChange=0;
 							if (proBox[indexI[i]].intersectsBox ( proBox[indexJ[j]] )) {
 								//xyz
-								if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartX[indexJ[j]]=proStartX[indexI[i]];
 									proStartY[indexJ[j]]=proStartY[indexI[i]];
 									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(1);
 								}
-								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 									proEndX[indexJ[j]]=proStartX[indexI[i]];
 									proEndY[indexJ[j]]=proStartY[indexI[i]];
 									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(2);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartX[indexJ[j]]=proEndX[indexI[i]];
 									proStartY[indexJ[j]]=proEndY[indexI[i]];
 									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(3);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 
 									proEndX[indexJ[j]]=proEndX[indexI[i]];
 									proEndY[indexJ[j]]=proEndY[indexI[i]];
 									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(4);
 								}
 								//xy
-								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])>30) {
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])>proC) {
 									proStartX[indexJ[j]]=proStartX[indexI[i]];
 									proStartY[indexJ[j]]=proStartY[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(5);
 								}
-								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])>30) {
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])>proC) {
 									proEndX[indexJ[j]]=proStartX[indexI[i]];
 									proEndY[indexJ[j]]=proStartY[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(6);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])>30) {
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])>proC) {
 									proStartX[indexJ[j]]=proEndX[indexI[i]];
 									proStartY[indexJ[j]]=proEndY[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(7);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])>30) {
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])>proC) {
 									proEndX[indexJ[j]]=proEndX[indexI[i]];
 									proEndY[indexJ[j]]=proEndY[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(8);
 								}
 								//yz
-								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])>30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])>proC && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartY[indexJ[j]]=proStartY[indexI[i]];
 									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(9);
 								}
-								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])>30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])>proC && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 									proEndY[indexJ[j]]=proStartY[indexI[i]];
 									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(10);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])>30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])>proC && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartY[indexJ[j]]=proEndY[indexI[i]];
 									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
-									proEndY[indexJ[j]]=proStartY[indexJ[j]]+proScaleY[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									proEndY[indexJ[j]]=proStartY[indexJ[j]]+profiles[indexJ[j]].scale.y-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(11);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])>30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])>proC && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])<proC && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 									proEndY[indexJ[j]]=proEndY[indexI[i]];
 									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
-									proStartY[indexJ[j]]=proEndY[indexJ[j]]-proScaleY[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartY[indexJ[j]]=proEndY[indexJ[j]]-profiles[indexJ[j]].scale.y+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(12);
 								}
 								//xz
-								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])>30 && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								else if (Math.abs(proStartX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proStartY[indexJ[j]])>proC && Math.abs(proStartZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartX[indexJ[j]]=proStartX[indexI[i]];
 									proStartZ[indexJ[j]]=proStartZ[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(13);
 								}
-								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])>30 && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proStartX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proStartY[indexI[i]]-proEndY[indexJ[j]])>proC && Math.abs(proStartZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 									proEndX[indexJ[j]]=proStartX[indexI[i]];
 									proEndZ[indexJ[j]]=proStartZ[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(14);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])>30 && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proStartX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proStartY[indexJ[j]])>proC && Math.abs(proEndZ[indexI[i]]-proStartZ[indexJ[j]])<proC) {
 									proStartX[indexJ[j]]=proEndX[indexI[i]];
 									proStartZ[indexJ[j]]=proEndZ[indexI[i]];
-									proEndX[indexJ[j]]=proStartX[indexJ[j]]+proScaleX[indexJ[j]]*30-30;
-									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+proScaleZ[indexJ[j]]*30-30;
-									indexK.push(indexJ.splice(j,1));numChange++;//alert(15);
+									proEndX[indexJ[j]]=proStartX[indexJ[j]]+profiles[indexJ[j]].scale.x-proC;
+									proEndZ[indexJ[j]]=proStartZ[indexJ[j]]+profiles[indexJ[j]].scale.z-proC;
+									indexK.push(indexJ.splice(j,1));numChange++;//alert(proC/2);
 								}
-								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<30 && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])>30 && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<30) {
+								else if (Math.abs(proEndX[indexI[i]]-proEndX[indexJ[j]])<proC && Math.abs(proEndY[indexI[i]]-proEndY[indexJ[j]])>proC && Math.abs(proEndZ[indexI[i]]-proEndZ[indexJ[j]])<proC) {
 									proEndX[indexJ[j]]=proEndX[indexI[i]];
 									proEndZ[indexJ[j]]=proEndZ[indexI[i]];
-									proStartX[indexJ[j]]=proEndX[indexJ[j]]-proScaleX[indexJ[j]]*30+30;
-									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-proScaleZ[indexJ[j]]*30+30;
+									proStartX[indexJ[j]]=proEndX[indexJ[j]]-profiles[indexJ[j]].scale.x+proC;
+									proStartZ[indexJ[j]]=proEndZ[indexJ[j]]-profiles[indexJ[j]].scale.z+proC;
 									indexK.push(indexJ.splice(j,1));numChange++;//alert(16);
 								}
 								else {
@@ -893,22 +958,22 @@
 					}
 				}
 				for (var i = 0; i < profiles.length; i++) {
-					profiles[i].position.x=proStartX[i]+proScaleX[i]*15-15;
-					profiles[i].position.y=proStartY[i]+proScaleY[i]*15-15;
-					profiles[i].position.z=proStartZ[i]+proScaleZ[i]*15-15;
+					profiles[i].position.x=proStartX[i]+profiles[i].scale.x/2-proC/2;
+					profiles[i].position.y=proStartY[i]+profiles[i].scale.y/2-proC/2;
+					profiles[i].position.z=proStartZ[i]+profiles[i].scale.z/2-proC/2;
 				}
 				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&woods) {
 					for (var i = 0; i < woods.length; i++) {
 						for (var j = 0; j < profiles.length; j++) {
-							if (Math.abs(proStartX[j]-woodMaxX[i])<30 && Math.abs(proStartY[j]-woodMaxY[i])<30 && Math.abs(proStartZ[j]-woodMaxZ[i])<30) {
-								woods[i].position.x=proStartX[j]-woods[i].scale.x*15+15;
-								woods[i].position.y=proStartY[j]-woods[i].scale.y*15+15;
-								woods[i].position.z=proStartZ[j]-woods[i].scale.z*15+15;
+							if (Math.abs(proStartX[j]-woodMaxX[i])<proC && Math.abs(proStartY[j]-woodMaxY[i])<proC && Math.abs(proStartZ[j]-woodMaxZ[i])<proC) {
+								woods[i].position.x=proStartX[j]-woods[i].scale.x/2+proC/2;
+								woods[i].position.y=proStartY[j]-woods[i].scale.y/2+proC/2;
+								woods[i].position.z=proStartZ[j]-woods[i].scale.z/2+proC/2;
 							}
-							else if (Math.abs(proEndX[j]-woodMaxX[i])<30 && Math.abs(proEndY[j]-woodMaxY[i])<30 && Math.abs(proEndZ[j]-woodMaxZ[i])<30) {
-								woods[i].position.x=proEndX[j]-woods[i].scale.x*15+15;
-								woods[i].position.y=proEndY[j]-woods[i].scale.y*15+15;
-								woods[i].position.z=proEndZ[j]-woods[i].scale.z*15+15;
+							else if (Math.abs(proEndX[j]-woodMaxX[i])<proC && Math.abs(proEndY[j]-woodMaxY[i])<proC && Math.abs(proEndZ[j]-woodMaxZ[i])<proC) {
+								woods[i].position.x=proEndX[j]-woods[i].scale.x/2+proC/2;
+								woods[i].position.y=proEndY[j]-woods[i].scale.y/2+proC/2;
+								woods[i].position.z=proEndZ[j]-woods[i].scale.z/2+proC/2;
 							}
 						}
 					}
@@ -916,15 +981,15 @@
 				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&glasses) {
 					for (var i = 0; i < glasses.length; i++) {
 						for (var j = 0; j < profiles.length; j++) {
-							if (Math.abs(proStartX[j]-glassMaxX[i])<30 && Math.abs(proStartY[j]-glassMaxY[i])<30 && Math.abs(proStartZ[j]-glassMaxZ[i])<30) {
-								glasses[i].position.x=proStartX[j]-glasses[i].scale.x*15+15;
-								glasses[i].position.y=proStartY[j]-glasses[i].scale.y*15+15;
-								glasses[i].position.z=proStartZ[j]-glasses[i].scale.z*15+15;
+							if (Math.abs(proStartX[j]-glassMaxX[i])<proC && Math.abs(proStartY[j]-glassMaxY[i])<proC && Math.abs(proStartZ[j]-glassMaxZ[i])<proC) {
+								glasses[i].position.x=proStartX[j]-glasses[i].scale.x/2+proC/2;
+								glasses[i].position.y=proStartY[j]-glasses[i].scale.y/2+proC/2;
+								glasses[i].position.z=proStartZ[j]-glasses[i].scale.z/2+proC/2;
 							}
-							else if (Math.abs(proEndX[j]-glassMaxX[i])<30 && Math.abs(proEndY[j]-glassMaxY[i])<30 && Math.abs(proEndZ[j]-glassMaxZ[i])<30) {
-								glasses[i].position.x=proEndX[j]-glasses[i].scale.x*15+15;
-								glasses[i].position.y=proEndY[j]-glasses[i].scale.y*15+15;
-								glasses[i].position.z=proEndZ[j]-glasses[i].scale.z*15+15;
+							else if (Math.abs(proEndX[j]-glassMaxX[i])<proC && Math.abs(proEndY[j]-glassMaxY[i])<proC && Math.abs(proEndZ[j]-glassMaxZ[i])<proC) {
+								glasses[i].position.x=proEndX[j]-glasses[i].scale.x/2+proC/2;
+								glasses[i].position.y=proEndY[j]-glasses[i].scale.y/2+proC/2;
+								glasses[i].position.z=proEndZ[j]-glasses[i].scale.z/2+proC/2;
 							}
 						}
 					}
@@ -932,15 +997,15 @@
 				if (numTest!=100000&&valueTest!=1&&profiles.length>3&&cloths) {
 					for (var i = 0; i < cloths.length; i++) {
 						for (var j = 0; j < profiles.length; j++) {
-							if (Math.abs(proStartX[j]-clothMaxX[i])<30 && Math.abs(proStartY[j]-clothMaxY[i])<30 && Math.abs(proStartZ[j]-clothMaxZ[i])<30) {
-								cloths[i].position.x=proStartX[j]-cloths[i].scale.x*15+15;
-								cloths[i].position.y=proStartY[j]-cloths[i].scale.y*15+15;
-								cloths[i].position.z=proStartZ[j]-cloths[i].scale.z*15+15;
+							if (Math.abs(proStartX[j]-clothMaxX[i])<proC && Math.abs(proStartY[j]-clothMaxY[i])<proC && Math.abs(proStartZ[j]-clothMaxZ[i])<proC) {
+								cloths[i].position.x=proStartX[j]-cloths[i].scale.x/2+proC/2;
+								cloths[i].position.y=proStartY[j]-cloths[i].scale.y/2+proC/2;
+								cloths[i].position.z=proStartZ[j]-cloths[i].scale.z/2+proC/2;
 							}
-							else if (Math.abs(proEndX[j]-clothMaxX[i])<30 && Math.abs(proEndY[j]-clothMaxY[i])<30 && Math.abs(proEndZ[j]-clothMaxZ[i])<30) {
-								cloths[i].position.x=proEndX[j]-cloths[i].scale.x*15+15;
-								cloths[i].position.y=proEndY[j]-cloths[i].scale.y*15+15;
-								cloths[i].position.z=proEndZ[j]-cloths[i].scale.z*15+15;
+							else if (Math.abs(proEndX[j]-clothMaxX[i])<proC && Math.abs(proEndY[j]-clothMaxY[i])<proC && Math.abs(proEndZ[j]-clothMaxZ[i])<proC) {
+								cloths[i].position.x=proEndX[j]-cloths[i].scale.x/2+proC/2;
+								cloths[i].position.y=proEndY[j]-cloths[i].scale.y/2+proC/2;
+								cloths[i].position.z=proEndZ[j]-cloths[i].scale.z/2+proC/2;
 							}
 						}
 					}
