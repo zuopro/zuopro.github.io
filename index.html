@@ -161,7 +161,7 @@
 
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
-				mouse.set( ( event.changeTouches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.changeTouches[0].clientY / window.innerHeight ) * 2 + 1 );
+				mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
         if ( intersects.length > 0 ) {
