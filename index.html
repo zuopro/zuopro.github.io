@@ -147,10 +147,12 @@
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
 
-
+				alert(isTouchDevice());
 
 			}
-
+			function isTouchDevice() {
+    				return window.ontouchstart !== undefined;
+			}
 
 			function onWindowResize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
