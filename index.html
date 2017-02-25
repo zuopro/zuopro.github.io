@@ -39,7 +39,7 @@
 			var numAlign=0;
 			var proC=30;
 
-			var transformAxis;
+			var transformAxis,orbitControls;
 			var guiMode,guiModeControl,guiMaterial,guiMaterialControl,guiMove,guiMoveControl,guiZoom,guiZoomControl;
 			var mX,mY,mZ,sX,sY,sZ;
 			var objNum;
@@ -138,7 +138,7 @@
 				mouse = new THREE.Vector2();
 
         //orbitControls
-        var orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+         orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 				orbitControls.addEventListener('change', render);
 
         //event
@@ -242,6 +242,11 @@
                         alert('2');
 					switch (true) {
 						case isAdd:
+							objects.addEventListener('mouseDown', function () {
+    								orbitControls.enabled = false;
+							});
+							objects.addEventListener('mouseUp', function () {
+    								orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
