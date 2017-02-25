@@ -138,21 +138,25 @@
 				mouse = new THREE.Vector2();
 
         //orbitControls
-        //orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-				
+        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 
         //event
-				document.addEventListener( 'touchmove', onDocumentMouseMove, false );
-				document.addEventListener( 'touchstart', onDocumentMouseDown, false );
+				if (isTouchDevice()) {
+					document.addEventListener( 'touchend', onDocumentMouseDown, false );
+				}
+				else {
+					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				}
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
 
-				alert(isTouchDevice());
+			}
 
-			}
 			function isTouchDevice() {
-    				return window.ontouchstart !== undefined;
+    		return window.ontouchstart !== undefined;
 			}
+
 
 			function onWindowResize() {
 				camera.aspect = window.innerWidth / window.innerHeight;
@@ -162,30 +166,26 @@
 
 
 			function onDocumentMouseMove( event ) {
-				//event.preventDefault();
-				mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
+				event.preventDefault();
+				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
         if ( intersects.length > 0 ) {
           var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
-					//if (intersect.object != plane) {
-					//	orbitControls.enabled = false;
-					//}
-					//else {
-					//	orbitControls.enabled = true;
-					//}
 				}
-				//else {
-				//	orbitControls.enabled = true;
-				//}
 				render();
 			}
 
 			function onDocumentMouseDown( event ) {
-				//event.preventDefault();
-				mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
+				event.preventDefault();
+				if (isTouchDevice()) {
+					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
+				}
+				else {
+					mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				}
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
 				var intersect = intersects[0];
@@ -408,12 +408,7 @@
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
-									transformAxis.addEventListener('touchend', function () {
-    								orbitControls.enabled = false;
-									});
-									transformAxis.addEventListener('mouseUp', function () {
-    								orbitControls.enabled = true;
-									});
+
 
 									scene.add( transformAxis );
 								}
@@ -497,12 +492,7 @@
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
 									transformAxis.setMode('scale');
-									transformAxis.addEventListener('touchend', function () {
-    								orbitControls.enabled = false;
-									});
-									transformAxis.addEventListener('mouseUp', function () {
-    								orbitControls.enabled = true;
-									});
+
 
 									scene.add( transformAxis );
 								}
