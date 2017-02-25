@@ -406,13 +406,13 @@
 								if (transformAxis==null) {
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
-									transformAxis.attach( intersect.object );alert('ok');
+									transformAxis.attach( intersect.object );
 									transformAxis.addEventListener('mouseDown', function () {
     								orbitControls.enabled = false;
-									});
+									});alert('1');
 									transformAxis.addEventListener('mouseUp', function () {
     								orbitControls.enabled = true;
-									});
+									});alert('2');
 
 									scene.add( transformAxis );
 								}
@@ -429,7 +429,7 @@
 								else if (cloths.indexOf(intersect.object)!=-1) {
 									objNum='沙发或布面 '+cloths.indexOf(intersect.object);
 								}
-								console.log(intersect.object.position);
+								alert('3');
                 if (guiMove==null) {
 									guiMoveControl =  {
 										'序号' : objNum,
