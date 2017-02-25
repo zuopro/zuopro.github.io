@@ -183,11 +183,12 @@
 
 			function onDocumentMouseDown( event ) {
 				//event.preventDefault();
+				alert(event.type);
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
 				var intersect = intersects[0];
-				var isLast=true;alert(intersects.length);
+				var isLast=true;
 
 				if ( intersects.length > 0 && objects.length>0) {
 					//Mode
