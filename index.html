@@ -142,7 +142,7 @@
 				
 
         //event
-				document.addEventListener( 'touchcancel', onDocumentMouseMove, false );
+				document.addEventListener( 'touchmove', onDocumentMouseMove, false );
 				document.addEventListener( 'touchend', onDocumentMouseDown, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
@@ -161,7 +161,7 @@
 
 			function onDocumentMouseMove( event ) {
 				event.preventDefault();
-				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
         if ( intersects.length > 0 ) {
@@ -183,7 +183,7 @@
 
 			function onDocumentMouseDown( event ) {
 				event.preventDefault();
-				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+				mouse.set( ( event.changeTouches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.changeTouches[0].clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
 				var intersect = intersects[0];
