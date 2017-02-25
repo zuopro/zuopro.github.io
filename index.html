@@ -138,7 +138,7 @@
 				mouse = new THREE.Vector2();
 
         //orbitControls
-        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+        //orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 				
 
         //event
@@ -168,16 +168,16 @@
           var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
-					if (intersect.object != plane) {
-						orbitControls.enabled = false;
-					}
+					//if (intersect.object != plane) {
+					//	orbitControls.enabled = false;
+					//}
 					//else {
 					//	orbitControls.enabled = true;
 					//}
 				}
-				else {
-					orbitControls.enabled = true;
-				}
+				//else {
+				//	orbitControls.enabled = true;
+				//}
 				render();
 			}
 
