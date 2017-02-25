@@ -39,7 +39,7 @@
 			var numAlign=0;
 			var proC=30;
 
-			var transformAxis;
+			var transformAxis,orbitControls;
 			var guiMode,guiModeControl,guiMaterial,guiMaterialControl,guiMove,guiMoveControl,guiZoom,guiZoomControl;
 			var mX,mY,mZ,sX,sY,sZ;
 			var objNum;
@@ -138,7 +138,7 @@
 				mouse = new THREE.Vector2();
 
         //orbitControls
-        var orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+        orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 				orbitControls.addEventListener('change', render);
 
         //event
@@ -161,15 +161,22 @@
 
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
+				orbitControls.enabled = false;
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
+				var intersect = intersects[0];
         if ( intersects.length > 0 ) {
           var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					//helperMesh.position.set(Math.floor(helperMesh.position.x/10)*10,Math.floor(helperMesh.position.y/10)*10+20,Math.floor(helperMesh.position.z/10)*10);
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
-					orbitControls.enabled = false;
+					if (intersect.object != plane) {
+						orbitControls.enabled = false;
+					}
+					else {
+						orbitControls.enabled = true;
+					}
 				}
 				else {
 					orbitControls.enabled = true;
