@@ -39,7 +39,7 @@
 			var numAlign=0;
 			var proC=30;
 
-			var transformAxis,orbitControls;
+			var transformAxis;
 			var guiMode,guiModeControl,guiMaterial,guiMaterialControl,guiMove,guiMoveControl,guiZoom,guiZoomControl;
 			var mX,mY,mZ,sX,sY,sZ;
 			var objNum;
@@ -138,7 +138,7 @@
 				mouse = new THREE.Vector2();
 
         //orbitControls
-         orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+        var orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
 				orbitControls.addEventListener('change', render);
 
         //event
@@ -146,8 +146,7 @@
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				document.addEventListener( 'keydown', onDocumentKeyDown, false );
 				window.addEventListener( 'resize', onWindowResize, false );
-				document.addEventListener('touchstart',TouchAll, false);
-    		document.addEventListener('touchmove',TouchAll, false);
+
 
 
 			}
@@ -158,19 +157,9 @@
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 			}
-			function TouchAll(event){
-				switch(event.type){
-					case 'touchstart':
-						onDocumentMouseDown();
-						break;
-					case 'touchmove':
-						onDocumentMouseMove();
-						break;
-				}
-			}
+
 
 			function onDocumentMouseMove( event ) {
-				
 				//event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
@@ -180,7 +169,10 @@
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					//helperMesh.position.set(Math.floor(helperMesh.position.x/10)*10,Math.floor(helperMesh.position.y/10)*10+20,Math.floor(helperMesh.position.z/10)*10);
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
-
+					orbitControls.enabled = false;
+				}
+				else {
+					orbitControls.enabled = true;
 				}
 				render();
 			}
@@ -239,14 +231,9 @@
 						}
 						updateMode();
 					}
-                        
+
 					switch (true) {
 						case isAdd:
-							//objects.addEventListener('mouseDown', function () {
-    							//	orbitControls.enabled = false;
-							//});
-							//objects.addEventListener('mouseUp', function () {
-    							//	orbitControls.enabled = true;}
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -421,12 +408,7 @@
 									transformAxis.addEventListener('mouseUp', function () {
     								orbitControls.enabled = true;
 									});
-									transformAxis.addEventListener('touchstart', function () {
-    								orbitControls.enabled = false;
-									});
-									transformAxis.addEventListener('touchend', function () {
-    								orbitControls.enabled = true;
-									});
+
 									scene.add( transformAxis );
 								}
 
@@ -518,12 +500,7 @@
 									transformAxis.addEventListener('mouseUp', function () {
     								orbitControls.enabled = true;
 									});
-									transformAxis.addEventListener('touchstart', function () {
-    								orbitControls.enabled = false;
-									});
-									transformAxis.addEventListener('touchend', function () {
-    								orbitControls.enabled = true;
-									});
+
 									scene.add( transformAxis );
 								}
 								var objNum;
