@@ -168,7 +168,6 @@
         if ( intersects.length > 0 ) {
           var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
-					//helperMesh.position.set(Math.floor(helperMesh.position.x/10)*10,Math.floor(helperMesh.position.y/10)*10+20,Math.floor(helperMesh.position.z/10)*10);
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
 					if (intersect.object != plane) {
 						orbitControls.enabled = false;
@@ -407,7 +406,7 @@
 								if (transformAxis==null) {
 									transformAxis = new THREE.TransformControls( camera, renderer.domElement );
 									transformAxis.addEventListener( 'change', render );
-									transformAxis.attach( intersect.object );
+									transformAxis.attach( intersect.object );alert('ok');
 									transformAxis.addEventListener('mouseDown', function () {
     								orbitControls.enabled = false;
 									});
