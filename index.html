@@ -139,7 +139,7 @@
 
         //orbitControls
         orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-				orbitControls.addEventListener('change', render);
+				
 
         //event
 				document.addEventListener( 'touchmove', onDocumentMouseMove, false );
@@ -171,9 +171,9 @@
 					if (intersect.object != plane) {
 						orbitControls.enabled = false;
 					}
-					else {
-						orbitControls.enabled = true;
-					}
+					//else {
+					//	orbitControls.enabled = true;
+					//}
 				}
 				else {
 					orbitControls.enabled = true;
