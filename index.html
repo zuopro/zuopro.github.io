@@ -160,7 +160,7 @@
 
 
 			function onDocumentMouseMove( event ) {
-				//event.preventDefault();
+				event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
@@ -182,7 +182,7 @@
 			}
 
 			function onDocumentMouseDown( event ) {
-				//event.preventDefault();
+				event.preventDefault();
 				mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
