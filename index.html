@@ -188,7 +188,7 @@
 
 			function onDocumentMouseDown( event ) {
 				event.preventDefault();
-				alert(event.type);
+				alert(isTouchDevice());
 				if (isTouchDevice()) {
 					mouse.set( ( event.changeTouches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.changeTouches[0].clientY / window.innerHeight ) * 2 + 1 );
 				}
