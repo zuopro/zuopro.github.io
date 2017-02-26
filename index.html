@@ -251,6 +251,7 @@
 
 					switch (true) {
 						case isAdd:
+							orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -353,6 +354,7 @@
 							break;
 
 						case isSub:
+							orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -396,6 +398,7 @@
 							break;
 
 						case isMove:
+							orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -420,7 +423,7 @@
 									transformAxis.addEventListener( 'change', render );
 									transformAxis.attach( intersect.object );
 
-
+									orbitControls.enabled = false;
 									scene.add( transformAxis );
 								}
 
@@ -480,6 +483,7 @@
 							break;
 
 						case isZoom:
+							orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
@@ -504,7 +508,7 @@
 									transformAxis.attach( intersect.object );
 									transformAxis.setMode('scale');
 
-
+									orbitControls.enabled = false;
 									scene.add( transformAxis );
 								}
 								var objNum;
@@ -587,6 +591,7 @@
 							break;
 
 						case isAlign:
+							orbitControls.enabled = true;
 							if (transformAxis) {
 								transformAxis.detach();
 								transformAxis=null;
