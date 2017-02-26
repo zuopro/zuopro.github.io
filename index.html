@@ -139,6 +139,7 @@
 
         //orbitControls
         orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
+	orbitControls.addEventListener( 'change', render);
 
         //event
 				if (isTouchDevice()) {
