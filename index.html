@@ -155,7 +155,7 @@
 			}
 
 			function isTouchDevice() {
-    		return window.ontouchstart !== undefined;
+    		        	return window.ontouchstart !== undefined;
 			}
 
 
@@ -171,15 +171,15 @@
 				
 				if (isTouchDevice()) {
 					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
-					alert(event.touches[0].clientX);alert(event.touches[0].clientX);
+					//alert(event.touches[0].clientX);alert(event.touches[0].clientX);
 				}
 				else {
 					mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
 				}
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
-        if ( intersects.length > 0 ) {
-          var intersect = intersects[0];
+        			if ( intersects.length > 0 ) {
+         				var intersect = intersects[0];
 					helperMesh.position.copy( intersect.point ).add( intersect.face.normal );
 					helperMesh.position.divideScalar( 10 ).floor().multiplyScalar( 10 ).addScalar( proC );
 				}
