@@ -142,7 +142,8 @@
 
         //event
 				if (isTouchDevice()) {
-					document.addEventListener( 'touchmove', onDocumentMouseMove, false );
+					//document.addEventListener( 'touchmove', onDocumentMouseMove, false );
+					scene.remove( helperMesh );
 					document.addEventListener( 'touchstart', onDocumentMouseDown, false );
 				}
 				else {
@@ -169,13 +170,13 @@
 			function onDocumentMouseMove( event ) {
 				//event.preventDefault();
 				
-				if (isTouchDevice()) {
-					mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
+				//if (isTouchDevice()) {
+				//	mouse.set( ( event.touches[0].clientX / window.innerWidth ) * 2 - 1, - ( event.touches[0].clientY / window.innerHeight ) * 2 + 1 );
 					//alert(event.touches[0].clientX);alert(event.touches[0].clientX);
-				}
-				else {
+				//}
+				//else {
 					mouse.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
-				}
+				//}
 				raycaster.setFromCamera( mouse, camera );
 				var intersects = raycaster.intersectObjects( objects );
         			if ( intersects.length > 0 ) {
